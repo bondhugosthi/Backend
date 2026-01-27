@@ -16,6 +16,9 @@ connectDB();
 
 const app = express();
 
+// Trust proxy headers (Vercel/Reverse proxies)
+app.set('trust proxy', 1);
+
 // Security middleware
 app.use(helmet({
   crossOriginResourcePolicy: { policy: 'cross-origin' }
