@@ -99,7 +99,15 @@ const initializeAdmin = async () => {
 
 const PORT = process.env.PORT || 5000;
 
-app.listen(PORT, async () => {
-  console.log(`Server running on port ${PORT}`);
-  await initializeAdmin();
-});
+if (require.main === module) {
+  app.listen(PORT, async () => {
+    console.log(`Server running on port ${PORT}`);
+    await initializeAdmin();
+  });
+} else {
+  initializeAdmin().catch((error) => {
+    console.error('Error initializing admin:', error);
+  });
+}
+
+module.exports = app;
