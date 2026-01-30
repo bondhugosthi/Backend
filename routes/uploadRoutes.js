@@ -5,7 +5,24 @@ const upload = require('../middleware/upload');
 const { protect } = require('../middleware/auth');
 const { getGridFSBucket } = require('../utils/gridfs');
 
-const buildFileUrl = (req, id) => `${req.protocol}://${req.get('host')}/api/upload/file/${id}`;
+const normalizeBaseUrl = (value) => (value || '').replace(/\/+$/, '');
+
+const getBaseUrl = (req) => {
+  const envBase = normalizeBaseUrl(
+    process.env.PUBLIC_BASE_URL || process.env.BACKEND_URL || process.env.API_BASE_URL
+  );
+  if (envBase) {
+    return envBase;
+  }
+
+  const forwardedProto = String(req.headers['x-forwarded-proto'] || '').split(',')[0];
+  const forwardedHost = String(req.headers['x-forwarded-host'] || '').split(',')[0];
+  const protocol = forwardedProto || req.protocol || 'http';
+  const host = forwardedHost || req.get('host');
+  return `${protocol}://${host}`;
+};
+
+const buildFileUrl = (req, id) => `${getBaseUrl(req)}/api/upload/file/${id}`;
 
 const saveToGridFS = (bucket, file) => new Promise((resolve, reject) => {
   const uploadStream = bucket.openUploadStream(file.originalname, {
