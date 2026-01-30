@@ -1,4 +1,5 @@
 const mongoose = require('mongoose');
+const { ACTIVITY_RETENTION_SECONDS } = require('../utils/activityRetention');
 
 const activityLogSchema = new mongoose.Schema({
   admin: {
@@ -31,5 +32,6 @@ const activityLogSchema = new mongoose.Schema({
 // Index for faster queries
 activityLogSchema.index({ admin: 1, timestamp: -1 });
 activityLogSchema.index({ module: 1, timestamp: -1 });
+activityLogSchema.index({ timestamp: 1 }, { expireAfterSeconds: ACTIVITY_RETENTION_SECONDS });
 
 module.exports = mongoose.model('ActivityLog', activityLogSchema);

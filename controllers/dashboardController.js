@@ -6,6 +6,7 @@ const Member = require('../models/Member');
 const News = require('../models/News');
 const Contact = require('../models/Contact');
 const ActivityLog = require('../models/ActivityLog');
+const { getRetentionDate } = require('../utils/activityRetention');
 
 // @desc    Get dashboard statistics
 // @route   GET /api/dashboard/stats
@@ -48,7 +49,7 @@ const getDashboardStats = async (req, res) => {
       .select('name email subject createdAt');
 
     // Recent activity logs
-    const recentActivities = await ActivityLog.find()
+    const recentActivities = await ActivityLog.find({ timestamp: { $gte: getRetentionDate() } })
       .sort({ timestamp: -1 })
       .limit(10)
       .populate('admin', 'email');

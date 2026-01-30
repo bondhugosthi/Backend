@@ -1,4 +1,6 @@
 const mongoose = require('mongoose');
+const ActivityLog = require('../models/ActivityLog');
+const { getRetentionDate } = require('../utils/activityRetention');
 
 const connectDB = async () => {
   try {
@@ -8,6 +10,13 @@ const connectDB = async () => {
     });
     
     console.log(`MongoDB Connected: ${conn.connection.host}`);
+
+    try {
+      await ActivityLog.createIndexes();
+      await ActivityLog.deleteMany({ timestamp: { $lt: getRetentionDate() } });
+    } catch (indexError) {
+      console.warn('ActivityLog retention setup failed:', indexError.message || indexError);
+    }
   } catch (error) {
     console.error(`Error: ${error.message}`);
     throw error;

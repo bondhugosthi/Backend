@@ -1,4 +1,10 @@
 const ActivityLog = require('../models/ActivityLog');
+const { getRetentionDate } = require('../utils/activityRetention');
+
+const parseDate = (value) => {
+  const date = new Date(value);
+  return Number.isNaN(date.getTime()) ? null : date;
+};
 
 // @desc    Get activity logs
 // @route   GET /api/activity-logs
@@ -6,16 +12,22 @@ const ActivityLog = require('../models/ActivityLog');
 const getActivityLogs = async (req, res) => {
   try {
     const { admin, module, action, startDate, endDate, page = 1, limit = 50 } = req.query;
-    let query = {};
+    const query = {};
+    const retentionDate = getRetentionDate();
 
     if (admin) query.admin = admin;
     if (module) query.module = module;
     if (action) query.action = action;
-    if (startDate || endDate) {
-      query.timestamp = {};
-      if (startDate) query.timestamp.$gte = new Date(startDate);
-      if (endDate) query.timestamp.$lte = new Date(endDate);
+    const timestampQuery = { $gte: retentionDate };
+    const start = startDate ? parseDate(startDate) : null;
+    const end = endDate ? parseDate(endDate) : null;
+    if (start && start > retentionDate) {
+      timestampQuery.$gte = start;
     }
+    if (end) {
+      timestampQuery.$lte = end;
+    }
+    query.timestamp = timestampQuery;
 
     const skip = (page - 1) * limit;
 
@@ -46,7 +58,8 @@ const getActivityLogs = async (req, res) => {
 // @access  Private
 const getActivityLogById = async (req, res) => {
   try {
-    const log = await ActivityLog.findById(req.params.id)
+    const retentionDate = getRetentionDate();
+    const log = await ActivityLog.findOne({ _id: req.params.id, timestamp: { $gte: retentionDate } })
       .populate('admin', 'email role');
 
     if (!log) {
@@ -64,15 +77,19 @@ const getActivityLogById = async (req, res) => {
 // @access  Private
 const getActivityStats = async (req, res) => {
   try {
+    const retentionDate = getRetentionDate();
     const actionStats = await ActivityLog.aggregate([
+      { $match: { timestamp: { $gte: retentionDate } } },
       { $group: { _id: '$action', count: { $sum: 1 } } }
     ]);
 
     const moduleStats = await ActivityLog.aggregate([
+      { $match: { timestamp: { $gte: retentionDate } } },
       { $group: { _id: '$module', count: { $sum: 1 } } }
     ]);
 
     const adminStats = await ActivityLog.aggregate([
+      { $match: { timestamp: { $gte: retentionDate } } },
       {
         $group: {
           _id: '$admin',
