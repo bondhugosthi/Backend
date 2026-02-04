@@ -142,8 +142,21 @@ const addMediaToGallery = async (req, res) => {
       return res.status(404).json({ message: 'Gallery not found' });
     }
 
-    const newMedia = req.body.media; // Array of media objects
+    const newMedia = Array.isArray(req.body.media) ? req.body.media : [];
+    if (newMedia.length === 0) {
+      return res.status(400).json({ message: 'No media provided' });
+    }
+
     gallery.media.push(...newMedia);
+
+    if (!gallery.coverImage) {
+      const firstImage = newMedia.find((item) => item && item.type !== 'video' && item.url)
+        || newMedia.find((item) => item && item.url);
+      if (firstImage?.url) {
+        gallery.coverImage = firstImage.url;
+      }
+    }
+
     await gallery.save();
 
     res.json(gallery);
