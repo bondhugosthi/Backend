@@ -1,6 +1,22 @@
 const Event = require('../models/Event');
 const ActivityLog = require('../models/ActivityLog');
 
+const resolveEventCover = (eventData) => {
+  if (!eventData) {
+    return '';
+  }
+
+  const gallery = Array.isArray(eventData.gallery) ? eventData.gallery : [];
+  const galleryItem = gallery.find((item) => item && item.url);
+  if (galleryItem?.url) {
+    return galleryItem.url;
+  }
+
+  const images = Array.isArray(eventData.images) ? eventData.images : [];
+  const image = images.find(Boolean);
+  return image || '';
+};
+
 // @desc    Get all events
 // @route   GET /api/events
 // @access  Public
@@ -54,6 +70,13 @@ const createEvent = async (req, res) => {
       createdBy: req.admin._id
     };
 
+    if (!eventData.coverImage) {
+      const fallbackCover = resolveEventCover(eventData);
+      if (fallbackCover) {
+        eventData.coverImage = fallbackCover;
+      }
+    }
+
     const event = await Event.create(eventData);
 
     // Log activity
@@ -83,9 +106,17 @@ const updateEvent = async (req, res) => {
       return res.status(404).json({ message: 'Event not found' });
     }
 
+    const payload = { ...req.body };
+    if (!payload.coverImage && !event.coverImage) {
+      const fallbackCover = resolveEventCover(payload) || resolveEventCover(event);
+      if (fallbackCover) {
+        payload.coverImage = fallbackCover;
+      }
+    }
+
     const updatedEvent = await Event.findByIdAndUpdate(
       req.params.id,
-      req.body,
+      payload,
       { new: true, runValidators: true }
     );
 
