@@ -70,6 +70,10 @@ const createEvent = async (req, res) => {
       createdBy: req.admin._id
     };
 
+    if (eventData.coverImage === '') {
+      delete eventData.coverImage;
+    }
+
     if (!eventData.coverImage) {
       const fallbackCover = resolveEventCover(eventData);
       if (fallbackCover) {
@@ -107,6 +111,9 @@ const updateEvent = async (req, res) => {
     }
 
     const payload = { ...req.body };
+    if (payload.coverImage === '') {
+      delete payload.coverImage;
+    }
     if (!payload.coverImage && !event.coverImage) {
       const fallbackCover = resolveEventCover(payload) || resolveEventCover(event);
       if (fallbackCover) {
