@@ -6,11 +6,13 @@ const {
   createMember,
   updateMember,
   deleteMember,
-  getCommitteeByYear
+  getCommitteeByYear,
+  getLatestCommittee
 } = require('../controllers/memberController');
 const { protect } = require('../middleware/auth');
 
 router.get('/', getMembers);
+router.get('/committee/latest', getLatestCommittee);
 router.get('/committee/:year', getCommitteeByYear);
 router.get('/:id', getMemberById);
 

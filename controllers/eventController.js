@@ -51,23 +51,57 @@ const applyDefaultLocation = (event, defaultLocation) => {
 // @access  Public
 const getEvents = async (req, res) => {
   try {
-    const { status, type, year, isHighlight } = req.query;
+    const { status, type, year, isHighlight, from, to, limit, sort } = req.query;
     let query = {};
 
     if (status) query.status = status;
     if (type) query.eventType = type;
+    const dateQuery = {};
     if (year) {
       const startDate = new Date(year, 0, 1);
       const endDate = new Date(year, 11, 31);
-      query.date = { $gte: startDate, $lte: endDate };
+      dateQuery.$gte = startDate;
+      dateQuery.$lte = endDate;
+    }
+    if (from) {
+      const fromDate = new Date(from);
+      if (!Number.isNaN(fromDate.getTime())) {
+        dateQuery.$gte = fromDate;
+      }
+    }
+    if (to) {
+      const toDate = new Date(to);
+      if (!Number.isNaN(toDate.getTime())) {
+        dateQuery.$lte = toDate;
+      }
+    }
+    if (Object.keys(dateQuery).length > 0) {
+      query.date = dateQuery;
     }
     if (isHighlight !== undefined) {
       query.isHighlight = isHighlight === 'true';
     }
 
-    const events = await Event.find(query)
-      .sort({ date: -1 })
+    let sortConfig = { date: -1 };
+    if (sort) {
+      const normalized = String(sort).toLowerCase();
+      if (['date_asc', 'date:asc', 'asc', 'oldest'].includes(normalized)) {
+        sortConfig = { date: 1 };
+      } else if (['date_desc', 'date:desc', 'desc', 'latest'].includes(normalized)) {
+        sortConfig = { date: -1 };
+      }
+    }
+
+    let queryBuilder = Event.find(query)
+      .sort(sortConfig)
       .populate('createdBy', 'email');
+
+    const limitNumber = Number(limit);
+    if (!Number.isNaN(limitNumber) && limitNumber > 0) {
+      queryBuilder = queryBuilder.limit(limitNumber);
+    }
+
+    const events = await queryBuilder;
 
     const defaultLocation = await getDefaultEventLocation();
     if (defaultLocation) {
@@ -242,6 +276,11 @@ const getUpcomingEvents = async (req, res) => {
     })
       .sort({ date: 1 })
       .limit(5);
+
+    const defaultLocation = await getDefaultEventLocation();
+    if (defaultLocation) {
+      events.forEach((event) => applyDefaultLocation(event, defaultLocation));
+    }
 
     res.json(events);
   } catch (error) {

@@ -142,11 +142,41 @@ const getCommitteeByYear = async (req, res) => {
   }
 };
 
+// @desc    Get latest committee members
+// @route   GET /api/members/committee/latest
+// @access  Public
+const getLatestCommittee = async (req, res) => {
+  try {
+    const latest = await Member.findOne({
+      'committee.year': { $ne: null },
+      isActive: true
+    })
+      .sort({ 'committee.year': -1 })
+      .select('committee.year')
+      .lean();
+
+    if (!latest?.committee?.year) {
+      return res.json({ year: null, members: [] });
+    }
+
+    const year = latest.committee.year;
+    const members = await Member.find({
+      'committee.year': year,
+      isActive: true
+    }).sort({ priority: -1, role: 1, name: 1 });
+
+    res.json({ year, members });
+  } catch (error) {
+    res.status(500).json({ message: 'Server error', error: error.message });
+  }
+};
+
 module.exports = {
   getMembers,
   getMemberById,
   createMember,
   updateMember,
   deleteMember,
-  getCommitteeByYear
+  getCommitteeByYear,
+  getLatestCommittee
 };

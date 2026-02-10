@@ -33,6 +33,11 @@ const eventSchema = new mongoose.Schema({
     url: String,
     caption: String
   }],
+  expectations: [String],
+  faqs: [{
+    question: String,
+    answer: String
+  }],
   organizer: String,
   participants: Number,
   results: {

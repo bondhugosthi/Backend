@@ -14,6 +14,14 @@ const settingsSchema = new mongoose.Schema({
     address: String,
     mapLink: String
   },
+  cta: {
+    title: String,
+    description: String,
+    primaryLabel: String,
+    primaryLink: String,
+    secondaryLabel: String,
+    secondaryLink: String
+  },
   businessHours: [
     {
       day: String,
