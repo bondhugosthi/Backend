@@ -1,5 +1,6 @@
 const Event = require('../models/Event');
 const ActivityLog = require('../models/ActivityLog');
+const Settings = require('../models/Settings');
 
 const resolveEventCover = (eventData) => {
   if (!eventData) {
@@ -15,6 +16,34 @@ const resolveEventCover = (eventData) => {
   const images = Array.isArray(eventData.images) ? eventData.images : [];
   const image = images.find(Boolean);
   return image || '';
+};
+
+const normalizeLocation = (value, fallback) => {
+  const trimmed = typeof value === 'string' ? value.trim() : '';
+  if (trimmed) {
+    return trimmed;
+  }
+  const fallbackTrimmed = typeof fallback === 'string' ? fallback.trim() : '';
+  return fallbackTrimmed || '';
+};
+
+const getDefaultEventLocation = async () => {
+  try {
+    const settings = await Settings.findOne().select('contactDetails.address').lean();
+    return settings?.contactDetails?.address?.trim() || '';
+  } catch (error) {
+    return '';
+  }
+};
+
+const applyDefaultLocation = (event, defaultLocation) => {
+  if (!defaultLocation || !event) {
+    return event;
+  }
+  if (!event.location || String(event.location).trim() === '') {
+    event.location = defaultLocation;
+  }
+  return event;
 };
 
 // @desc    Get all events
@@ -40,6 +69,11 @@ const getEvents = async (req, res) => {
       .sort({ date: -1 })
       .populate('createdBy', 'email');
 
+    const defaultLocation = await getDefaultEventLocation();
+    if (defaultLocation) {
+      events.forEach((event) => applyDefaultLocation(event, defaultLocation));
+    }
+
     res.json(events);
   } catch (error) {
     res.status(500).json({ message: 'Server error', error: error.message });
@@ -57,6 +91,9 @@ const getEventById = async (req, res) => {
       return res.status(404).json({ message: 'Event not found' });
     }
 
+    const defaultLocation = await getDefaultEventLocation();
+    applyDefaultLocation(event, defaultLocation);
+
     res.json(event);
   } catch (error) {
     res.status(500).json({ message: 'Server error', error: error.message });
@@ -72,6 +109,14 @@ const createEvent = async (req, res) => {
       ...req.body,
       createdBy: req.admin._id
     };
+
+    const defaultLocation = await getDefaultEventLocation();
+    const resolvedLocation = normalizeLocation(eventData.location, defaultLocation);
+    if (resolvedLocation) {
+      eventData.location = resolvedLocation;
+    } else {
+      delete eventData.location;
+    }
 
     if (eventData.coverImage === '') {
       delete eventData.coverImage;
@@ -116,6 +161,17 @@ const updateEvent = async (req, res) => {
     const payload = { ...req.body };
     if (payload.coverImage === '') {
       delete payload.coverImage;
+    }
+    const defaultLocation = await getDefaultEventLocation();
+    if (payload.location !== undefined) {
+      const resolvedLocation = normalizeLocation(payload.location, defaultLocation);
+      if (resolvedLocation) {
+        payload.location = resolvedLocation;
+      } else {
+        delete payload.location;
+      }
+    } else if (!event.location && defaultLocation) {
+      payload.location = defaultLocation;
     }
     if (!payload.coverImage && !event.coverImage) {
       const fallbackCover = resolveEventCover(payload) || resolveEventCover(event);
