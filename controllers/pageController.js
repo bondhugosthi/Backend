@@ -10,7 +10,11 @@ const getPageByName = async (req, res) => {
       .populate('updatedBy', 'email');
 
     if (!page) {
-      return res.status(404).json({ message: 'Page not found' });
+      return res.json({
+        pageName: req.params.pageName,
+        sections: [],
+        seo: {}
+      });
     }
 
     res.json(page);
