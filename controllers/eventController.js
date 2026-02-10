@@ -22,7 +22,7 @@ const resolveEventCover = (eventData) => {
 // @access  Public
 const getEvents = async (req, res) => {
   try {
-    const { status, type, year } = req.query;
+    const { status, type, year, isHighlight } = req.query;
     let query = {};
 
     if (status) query.status = status;
@@ -31,6 +31,9 @@ const getEvents = async (req, res) => {
       const startDate = new Date(year, 0, 1);
       const endDate = new Date(year, 11, 31);
       query.date = { $gte: startDate, $lte: endDate };
+    }
+    if (isHighlight !== undefined) {
+      query.isHighlight = isHighlight === 'true';
     }
 
     const events = await Event.find(query)

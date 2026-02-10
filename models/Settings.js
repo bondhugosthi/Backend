@@ -14,6 +14,19 @@ const settingsSchema = new mongoose.Schema({
     address: String,
     mapLink: String
   },
+  businessHours: [
+    {
+      day: String,
+      open: String,
+      close: String,
+      isClosed: {
+        type: Boolean,
+        default: false
+      }
+    }
+  ],
+  brochureUrl: String,
+  brochureLabel: String,
   socialMedia: {
     facebook: String,
     instagram: String,

@@ -22,6 +22,10 @@ const memberSchema = new mongoose.Schema({
     instagram: String,
     twitter: String
   },
+  isSpotlight: {
+    type: Boolean,
+    default: false
+  },
   isActive: {
     type: Boolean,
     default: true

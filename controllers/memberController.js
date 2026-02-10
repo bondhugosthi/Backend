@@ -6,12 +6,13 @@ const ActivityLog = require('../models/ActivityLog');
 // @access  Public
 const getMembers = async (req, res) => {
   try {
-    const { role, year, isActive } = req.query;
+    const { role, year, isActive, isSpotlight } = req.query;
     let query = {};
 
     if (role) query.role = role;
     if (year) query['committee.year'] = parseInt(year);
     if (isActive !== undefined) query.isActive = isActive === 'true';
+    if (isSpotlight !== undefined) query.isSpotlight = isSpotlight === 'true';
 
     const members = await Member.find(query)
       .sort({ priority: -1, role: 1, name: 1 });

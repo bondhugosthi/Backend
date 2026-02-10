@@ -55,6 +55,7 @@ app.use('/api/social-work', require('./routes/socialWorkRoutes'));
 app.use('/api/gallery', require('./routes/galleryRoutes'));
 app.use('/api/members', require('./routes/memberRoutes'));
 app.use('/api/news', require('./routes/newsRoutes'));
+app.use('/api/testimonials', require('./routes/testimonialRoutes'));
 app.use('/api/contact', require('./routes/contactRoutes'));
 app.use('/api/pages', require('./routes/pageRoutes'));
 app.use('/api/settings', require('./routes/settingsRoutes'));

@@ -39,6 +39,10 @@ const eventSchema = new mongoose.Schema({
     winners: [String],
     summary: String
   },
+  isHighlight: {
+    type: Boolean,
+    default: false
+  },
   isArchived: {
     type: Boolean,
     default: false
