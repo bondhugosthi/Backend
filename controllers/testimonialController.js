@@ -9,8 +9,10 @@ const getTestimonials = async (req, res) => {
     const { limit, isPublished } = req.query;
     const query = {};
 
-    if (isPublished !== 'false') {
+    if (isPublished === undefined) {
       query.isPublished = true;
+    } else {
+      query.isPublished = isPublished === 'true';
     }
 
     let request = Testimonial.find(query)
