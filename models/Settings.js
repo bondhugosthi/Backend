@@ -12,7 +12,8 @@ const settingsSchema = new mongoose.Schema({
     email: String,
     phone: String,
     address: String,
-    mapLink: String
+    mapLink: String,
+    mapEmbedLink: String
   },
   cta: {
     title: String,
